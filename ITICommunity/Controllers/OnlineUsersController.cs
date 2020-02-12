@@ -22,24 +22,45 @@ namespace ITICommunity.Controllers
 
         // GET: api/OnlineUsers
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<OnlineUser>>> GetOnlineUser()
+        //public async Task<ActionResult<IEnumerable<OnlineUser>>> GetOnlineUser()
+        //{
+        //    return await _context.OnlineUser.ToListAsync();
+        //}
+        ///
+        public IEnumerable<OnlineUser> GetOnlineUser(int id)
         {
-            return await _context.OnlineUser.ToListAsync();
+            List<User> users = _context.User.ToList();
+            List<Follow> follows = _context.Follow.ToList();
+            List<OnlineUser> onlineUsers = _context.OnlineUser.ToList();
+            var onlineFollowings =
+               (from f in follows.ToList()
+                join u in users.ToList() on f.UserId equals u.Id
+                join o in onlineUsers.ToList() on f.FollowingId equals o.UserId
+                where u.Id == id
+                where o.IsOnline == true
+                select new { UserId = o.Id, IsOnline = true, Start = o.StartTime }).ToList();
+            var following = (from user in _context.User
+                             join follower in _context.Follow on user.Id equals follower.UserId
+                             join online in _context.OnlineUser on follower.FollowingId equals online.UserId
+                             where user.Id == id
+                             select new { UserId = online.Id, IsOnline = true, Start = online.StartTime }).ToListAsync();
+            return following as ICollection<OnlineUser>;
+            //  return onlineFollowings as ICollection<OnlineUser> ;
+            // return JsonOptions(onlineFollowings.ToList());
         }
-
         // GET: api/OnlineUsers/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<OnlineUser>> GetOnlineUser(int id)
-        {
-            var onlineUser = await _context.OnlineUser.FindAsync(id);
+        //public async Task<ActionResult<OnlineUser>> GetOnlineUser(int id)
+        //{
+        //    var onlineUser = await _context.OnlineUser.FindAsync(id);
 
-            if (onlineUser == null)
-            {
-                return NotFound();
-            }
+        //    if (onlineUser == null)
+        //    {
+        //        return NotFound();
+        //    }
 
-            return onlineUser;
-        }
+        //    return onlineUser;
+        //}
 
         // PUT: api/OnlineUsers/5
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for
@@ -109,19 +130,46 @@ namespace ITICommunity.Controllers
         ///get online followers only
         /// </summary>
         // GET: api/OnlineUsers
+
+        [Route("api/following/{id}")]
+       // [HttpGet("")]
         
-        [HttpGet("GetOnlineFollowing/{Id}")]
-        public async Task<ActionResult<IEnumerable<User>>> GetOnlineFollowing(int id)
+        public IEnumerable<OnlineUser> GetOnlineFollowing(int id)
         {
             List<User> users = _context.User.ToList();
             List<Follow> follows = _context.Follow.ToList();
             List<OnlineUser> onlineUsers = _context.OnlineUser.ToList();
-            var  onlineFollowings =
-                from o in onlineUsers.ToList()
-                join u in users.ToList() on o.UserId equals u.Id
-                join fol in follows.ToList() on u.Id equals fol.UserId where fol.FollowingId == o.UserId where o.UserId == id
-                select new {UserId=u.Id , onlineFollowing=o.UserId, FollowingID=fol.FollowingId };
-            return onlineFollowings as List<User>;
+            var onlineFollowings =
+               (from f in follows.ToList()
+                join u in users.ToList() on f.UserId equals u.Id
+                join o in onlineUsers.ToList() on f.FollowingId equals o.UserId
+                where u.Id == id
+                where o.IsOnline == true
+                select new { UserId = o.Id, IsOnline = true, Start = o.StartTime }).ToList();
+            var following = (from user in _context.User
+                             join follower in _context.Follow on user.Id equals follower.UserId
+                             join online in _context.OnlineUser on follower.FollowingId equals online.UserId
+                             where user.Id == id
+                             select new { UserId = online.Id, IsOnline = true, Start = online.StartTime }).ToListAsync();
+            return following as ICollection<OnlineUser>;
+          //  return onlineFollowings as ICollection<OnlineUser> ;
+            // return JsonOptions(onlineFollowings.ToList());
         }
+
+        ////public JsonResult OnlineFlw(int id)
+        ////{
+        ////    List<User> users = _context.User.ToList();
+        ////    List<Follow> follows = _context.Follow.ToList();
+        ////    List<OnlineUser> onlineUsers = _context.OnlineUser.ToList();
+        ////    var onlineFollowings =
+        ////       (from o in onlineUsers.ToList()
+        ////       join u in users.ToList() on o.UserId equals u.Id
+        ////       join fol in follows.ToList() on u.Id equals fol.UserId
+        ////       where fol.FollowingId == o.UserId
+        ////       where o.UserId == id
+        ////       where o.IsOnline == true
+        ////       select new { UserId = u.Id, onlineFollowing = o.UserId, FollowingID = fol.FollowingId }).ToList();
+        ////    return onlineFollowings as List<User>;
+        ////}
     }
 }
